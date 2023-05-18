@@ -55,13 +55,13 @@ const authUser = asyncHandler(async (req, res) => {
       token: generateToken(user._id),
     });
   }
-  if (user && (await user.matchPassword(password))) {
-    res.status(401);
-    throw new Error("check your mailbox for activation");
-  } else {
-    res.status(401);
-    throw new Error("Invalid Email or Password");
-  }
+  // if (user && (await user.matchPassword(password))) {
+  //   res.status(401);
+  //   throw new Error("check your mailbox for activation");
+  // } else {
+  res.status(401);
+  throw new Error("Invalid Email or Password");
+  // }
 });
 
 module.exports = { registerUser, authUser };

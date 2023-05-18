@@ -16,6 +16,7 @@ const userModel = mongoose.Schema(
       type: String,
       required: true,
     },
+    ventes: { type: Number },
   },
   { timestaps: true }
 );
