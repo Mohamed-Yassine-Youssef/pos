@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import SideBar from "../../components/directeurMagasin/SideBar";
 import Footer from "../../components/Footer";
 import BootstrapTable from "react-bootstrap-table-next";
 import paginationFactory from "react-bootstrap-table2-paginator";
 import "react-bootstrap-table2-paginator/dist/react-bootstrap-table2-paginator.min.css";
+import axios from "axios";
 const CalendrierEmployées = () => {
+  const [data, seData] = useState([]);
   const columns = [
     {
       dataField: "nomEmployer",
@@ -14,37 +16,60 @@ const CalendrierEmployées = () => {
     {
       dataField: "lundi",
       text: "lundi",
+      dataAlign: "center",
     },
     {
       dataField: "mardi",
       text: "mardi",
+      dataAlign: "center",
     },
     {
       dataField: "mercredi",
       text: "mercredi",
+      dataAlign: "center",
     },
     {
       dataField: "jeudi",
+      text: "jeudi",
+      dataAlign: "center",
+    },
+    {
+      dataField: "vendredi",
       text: "vendredi",
+      dataAlign: "center",
     },
     {
       dataField: "samedi",
-      text: "dimanche",
+      text: "samedi",
+      dataAlign: "center",
     },
-  ];
-  const data = [
     {
-      nomEmployer: "jean",
-      lundi: "Absent",
-      mardi: "8h-12h",
-      mercredi: "8h-12h",
-      jeudi: "8h-12h",
-      vendredi: "Absent",
-      samedi: "Absent",
-      dimanche: "Absent",
+      dataField: "dimanche",
+      text: "dimanche",
+      dataAlign: "center",
     },
-    {},
   ];
+
+  const getCalendarData = async () => {
+    const caldata = await axios.get("/api/calendar/getCalendar");
+    const response = caldata.data[0].cal;
+    console.log(response);
+    const filData = response.map((item) => ({
+      nomEmployer: item.nom,
+      lundi: item.lundi,
+      mardi: item.mardi,
+      mercredi: item.mercredi,
+      jeudi: item.jeudi,
+      vendredi: item.vendredi,
+      samedi: item.samedi,
+      dimanche: item.dimanche,
+    }));
+    seData(filData);
+  };
+  useEffect(() => {
+    getCalendarData();
+  }, []);
+
   return (
     <>
       <Header />
@@ -56,7 +81,9 @@ const CalendrierEmployées = () => {
             <div className="container-fluid">
               <div className="row mb-2">
                 <div className="col-sm-6">
-                  <h1 className="m-0 text-dark">Calendrier des Employées</h1>
+                  <h1 className="m-0 text-dark">
+                    Calendrier des employés de la semaine.
+                  </h1>
                 </div>
                 {/* /.col */}
 
@@ -70,17 +97,7 @@ const CalendrierEmployées = () => {
           {/* Main content */}
           <section className="content">
             <div className="container-fluid ">
-              <div className="row">
-                <div className="col-4">
-                  <label> Date debut:</label>
-                  <input type="date" className="form-control" />
-                </div>
-                <div className="col-4">
-                  <label>Date fin:</label>
-                  <input type="date" className="form-control" />
-                </div>
-              </div>
-              <div className="card mt-3">
+              <div className="card mt-3 p-3 ">
                 <BootstrapTable
                   bootstrap4
                   keyField="id"

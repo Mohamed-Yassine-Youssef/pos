@@ -5,60 +5,91 @@ import Footer from "../../components/Footer";
 import BootstrapTable from "react-bootstrap-table-next";
 import paginationFactory from "react-bootstrap-table2-paginator";
 import "react-bootstrap-table2-paginator/dist/react-bootstrap-table2-paginator.min.css";
+import axios from "axios";
 const VentesCaissieres = () => {
   const columns = [
     {
-      dataField: "nom_caissier",
+      dataField: "caissier_name",
       text: "nom caissier",
     },
+
     {
-      dataField: "date_debut",
-      text: "date debut",
-    },
-    {
-      dataField: "date_fin",
-      text: "date fin",
-    },
-    {
-      dataField: "ventes",
-      text: "ventes",
-    },
-    {
-      dataField: "temps_service",
-      text: "temps service",
-    },
-  ];
-  const data = [
-    {
-      nom_caissier: "John Smith",
-      date_debut: "2022-02-15",
-      date_fin: "2023-01-15",
-      ventes: 100.0,
-      temps_service: "6h",
+      dataField: "total",
+      text: " montant des ventes",
     },
   ];
 
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [filterNomCaissier, setFilterNomCaissier] = useState("");
+  const [filterDateDebut, setFilterDateDebut] = useState("");
+  const [filterDateFin, setFilterDateFin] = useState("");
+  const [data, setData] = useState([]);
   // const [filteredData, setFilteredData] = useState(caissiers);
 
-  const handleStartDateChange = (event) => {
-    setStartDate(event.target.value);
+  const fetchSales = async () => {
+    try {
+      const response = await axios.get("/api/sale/getSales");
+      const salesdata = response.data;
+
+      const salesByDate = {};
+
+      salesdata.forEach((sale) => {
+        const date = new Date(sale.updatedAt).toDateString();
+        if (!salesByDate[date]) {
+          salesByDate[date] = {};
+        }
+        if (!salesByDate[date][sale.caissier_name]) {
+          salesByDate[date][sale.caissier_name] = {
+            caissier_name: sale.caissier_name,
+            total: sale.total,
+          };
+        } else {
+          salesByDate[date][sale.caissier_name].total += sale.total;
+        }
+      });
+
+      const filteredData = [];
+
+      Object.entries(salesByDate).forEach(([date, sales]) => {
+        Object.values(sales).forEach((sale) => {
+          filteredData.push({
+            date,
+            caissier_name: sale.caissier_name,
+            total: sale.total,
+          });
+        });
+      });
+
+      let finalData = filteredData;
+
+      if (filterNomCaissier !== "") {
+        finalData = finalData.filter((sale) =>
+          sale.caissier_name
+            .toLowerCase()
+            .includes(filterNomCaissier.toLowerCase())
+        );
+      }
+
+      if (filterDateDebut !== "") {
+        finalData = finalData.filter(
+          (sale) => new Date(sale.date) >= new Date(filterDateDebut)
+        );
+      }
+
+      if (filterDateFin !== "") {
+        finalData = finalData.filter(
+          (sale) => new Date(sale.date) <= new Date(filterDateFin)
+        );
+      }
+
+      setData(finalData);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const handleEndDateChange = (event) => {
-    setEndDate(event.target.value);
-  };
-
-  // useEffect(() => {
-  //   const filteredCaissiers = caissiers.filter((caissier) => {
-  //     if (startDate === "" || endDate === "") {
-  //       return true;
-  //     }
-  //     return caissier.date_debut >= startDate && caissier.date_fin <= endDate;
-  //   });
-  //   setFilteredData(filteredCaissiers);
-  // }, [startDate, endDate]);
+  useEffect(() => {
+    fetchSales();
+  }, [filterNomCaissier, filterDateDebut, filterDateFin]);
 
   return (
     <>
@@ -87,15 +118,27 @@ const VentesCaissieres = () => {
             <div className="row">
               <div className="col-4">
                 <label>nom caissier:</label>
-                <input type="text" className="form-control" />
+                <input
+                  type="text"
+                  className="form-control"
+                  onChange={(e) => setFilterNomCaissier(e.target.value)}
+                />
               </div>
               <div className="col-4">
                 <label> Date debut:</label>
-                <input type="date" className="form-control" />
+                <input
+                  type="date"
+                  className="form-control"
+                  onChange={(e) => setFilterDateDebut(e.target.value)}
+                />
               </div>
               <div className="col-4">
                 <label>Date fin:</label>
-                <input type="date" className="form-control" />
+                <input
+                  type="date"
+                  className="form-control"
+                  onChange={(e) => setFilterDateFin(e.target.value)}
+                />
               </div>
             </div>
             <div className="card px-3 py-4 mt-3">

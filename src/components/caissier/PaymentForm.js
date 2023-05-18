@@ -1,112 +1,312 @@
-import React, { useState } from "react";
-import Facture from "./Facture";
-import ReactDOMServer from "react-dom/server";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-const PaymentForm = () => {
+import axios from "axios";
+const PaymentForm = ({
+  total,
+  tableData,
+  sousTotal,
+  tax,
+  promo,
+  selectedClientName,
+  selectedClientId,
+  saleID,
+  caissier,
+  vendeur,
+}) => {
   const [method, setMethod] = useState();
+  const [montantPourPayer, setMontantPourPayer] = useState(0);
+  const [montantRest, setMontantRest] = useState();
   const endpoint = useLocation();
-  const printPdf = (e) => {
-    e.preventDefault();
-    const element = ReactDOMServer.renderToString(<Facture />); // replace with the ID of your component
-    console.log(element);
-    const html = `
-    <html>
-      <head>
-        <title> </title>
-        <style>
-        .container {
-          width: 300px;
-        }
-        
-        .tableRow {
-          display: flex;
-          flex-direction: row;
-          justify-content: space-between;
-          align-items: center; /* added */
-          margin-bottom: 8px;
-        }
-        .totalRow {
-          border-top: 1px solid black;
-          border-bottom: 1px solid black;
-        }
-        .tableRow h3,
-        .tableRow p {
-          flex-basis: 25%; /* changed */
-          text-align: center; /* added */
-        }
-      </style>
-      </head>
-      <body>
-      <div class='container'>
-      <div class='header'>
-        <h1 class='companyName'>AMIT CHAMBIAL PVT LTD</h1>
-        <p class='address'>
-          FLoor 2 Building No 34 India <br /> Phone No- 0192083910
-        </p>
-        <p class='panTin'>PAN: AAKPS9298A TIN: 09820163701</p>
-        <h2 class='invoiceTitle'>RETAIL INVOICE</h2>
-        <div class='billInfoContainer'>
-          <div class='billInfoRow'>
-            <p>BILL NO: 091</p>
-            <p>TABLE NO: 091</p>
-          </div>
-          <div class='billInfoRow'>
-            <p>BILL DATE: 10/Mar/2022</p>
-            <p>TIME: 14:10</p>
-          </div>
-        </div>
-      </div>
-      <div class='tableContainer'>
-        <div class='tableRow'>
-          <h3>Particulars</h3>
-          <h3>Rate</h3>
-          <h3>Qty</h3>
-          <h3>Amount</h3>
-        </div>
-        <div class='tableRow'>
-          <p>Head and Shoulder</p>
-          <p>100</p>
-          <p>2</p>
-          <p>200</p>
-        </div>
-        <div class='tableRow'>
-          <p>Britania</p>
-          <p>25</p>
-          <p>2</p>
-          <p>50</p>
-        </div>
-        <div class='tableRow'>
-          <p>Tomatoes</p>
-          <p>40</p>
-          <p>1</p>
-          <p>40</p>
-        </div>
-        <div class='tableRow'>
-          <p>Chocolates</p>
-          <p>5</p>
-          <p>1</p>
-          <p>40</p>
-        </div>
-        <div class='tableRow totalRow'>
-          <p />
-          <h3>Total</h3>
-          <p />
-          <p>385</p>
-        </div>
-      </div>
-      <div class='footer'>
-        <p class='footerText'>Thank you for shopping with us!</
-    
-    div>
-      </body>
-    </html>
-  `;
 
-    const win = window.open("", "", "height=700,width=700");
-    win.document.write(html);
-    win.document.close();
-    win.print();
+  const handleMontant = (e) => {
+    setMontantPourPayer(e.target.value);
   };
+
+  const addSale = async () => {
+    try {
+      await axios.post("/api/sale", {
+        nom_client: selectedClientName,
+        client: selectedClientId || null,
+        mode_paiement: method,
+        products: tableData,
+        total: total,
+        status: total - montantPourPayer > 0 ? "en cours" : "payé",
+        montantRestant: total - montantPourPayer,
+        caissier_name: caissier,
+        vendeur_name: vendeur,
+      });
+
+      const html = `
+      <html>
+        <head>
+          <title> </title>
+          <style>
+          .container {
+            width: 300px;
+          }
+          .tableRow1 {
+          align-items: center; /* added */
+          }
+          .tableRow {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center; /* added */
+            
+          }
+          
+          .totalRow {
+            border-top: 1px solid black;
+            border-bottom: 1px solid black;
+            
+          }
+          .tableRow h3,
+          .tableRow p {
+            text-align: center; /* added */
+            margin-top:0px
+          }
+        </style>
+        </head>
+        <body>
+        <div class='container'>
+        <div class='header'>
+          <h1 class='companyName'>AMIT CHAMBIAL PVT LTD</h1>
+          <p class='address'>
+            FLoor 2 Building No 34 India <br /> Phone No- 0192083910
+          </p>
+          <p class='panTin'>PAN: AAKPS9298A TIN: 09820163701</p>
+          <h2 class='invoiceTitle'>RETAIL INVOICE</h2>
+          <div class='billInfoContainer'>
+            <div class='billInfoRow'>
+              <p>BILL NO: 091</p>
+              <p>TABLE NO: 091</p>
+            </div>
+            <div class='billInfoRow'>
+              <p>BILL DATE: 10/Mar/2022</p>
+              <p>TIME: 14:10</p>
+            </div>
+          </div>
+        </div>
+        <div class='tableContainer'>
+  
+        <div class='tableRow'>
+            <h3>Article</h3>
+           
+            <h3>Qte</h3>
+            <h3>Montant</h3>
+          </div>
+  
+          ${tableData
+            .map((item) => {
+              return `
+                  <div class="tableRow">
+                    <p>${item.name}</p>
+                    <p>${item.quantity}</p>
+                    <p>${item.price * item.quantity}</p>
+                  </div>
+                `;
+            })
+            .join("")}
+         
+          <div class=' totalRow'>
+          <div class='tableRow '>
+          <h3>sous totale</h3>
+          <p>${sousTotal}</p>
+          </div>
+          <div class='tableRow '>
+          <h3>Tax</h3>
+          <p>${tax}%</p>
+          </div>
+  
+          <div class='tableRow '>
+          <h3>Remise</h3>
+          <p>${promo}%</p>
+          </div>
+  
+            <div class='tableRow '>
+            <h3>Total</h3>
+            <p>${total}</p>
+            </div>
+            <div class='tableRow '>
+            <h3>montant payé </h3>
+            <p>${montantPourPayer}</p>
+            </div>
+            <div class='tableRow '>
+            <h3>montant restant</h3>
+            <p>${
+              montantRest > 0
+                ? Number(montantRest - montantPourPayer).toFixed(2)
+                : (total - montantPourPayer).toFixed(2)
+            }</p>
+            </div>
+          </div>
+        </div>
+        <div class='footer'>
+          <p class='footerText'>Merci de votre achat ! </
+      
+      div>
+        </body>
+      </html>
+    `;
+
+      const win = window.open("", "", "height=700,width=700");
+      win.document.write(html);
+      win.document.close();
+      win.print();
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get("/api/sale/getSales");
+      const salesdata = response.data;
+      const filteredData = salesdata.filter((sale) => {
+        return sale._id === saleID;
+      });
+      setMontantRest(filteredData[0].montantRestant);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const updateSale = async () => {
+    try {
+      await axios.put("/api/sale/updateSale/" + saleID, {
+        status: montantRest - montantPourPayer > 0 ? "en cours" : "payé",
+        montantRestant: montantRest - montantPourPayer,
+      });
+
+      const html = `
+      <html>
+        <head>
+          <title> </title>
+          <style>
+          .container {
+            width: 300px;
+          }
+          .tableRow1 {
+          align-items: center; /* added */
+          }
+          .tableRow {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center; /* added */
+            
+          }
+          
+          .totalRow {
+            border-top: 1px solid black;
+            border-bottom: 1px solid black;
+            
+          }
+          .tableRow h3,
+          .tableRow p {
+            text-align: center; /* added */
+            margin-top:0px
+          }
+        </style>
+        </head>
+        <body>
+        <div class='container'>
+        <div class='header'>
+          <h1 class='companyName'>AMIT CHAMBIAL PVT LTD</h1>
+          <p class='address'>
+            FLoor 2 Building No 34 India <br /> Phone No- 0192083910
+          </p>
+          <p class='panTin'>PAN: AAKPS9298A TIN: 09820163701</p>
+          <h2 class='invoiceTitle'>RETAIL INVOICE</h2>
+          <div class='billInfoContainer'>
+            <div class='billInfoRow'>
+              <p>BILL NO: 091</p>
+              <p>TABLE NO: 091</p>
+            </div>
+            <div class='billInfoRow'>
+              <p>BILL DATE: 10/Mar/2022</p>
+              <p>TIME: 14:10</p>
+            </div>
+          </div>
+        </div>
+        <div class='tableContainer'>
+  
+        <div class='tableRow'>
+            <h3>Article</h3>
+           
+            <h3>Qte</h3>
+            <h3>Montant</h3>
+          </div>
+  
+          ${tableData
+            .map((item) => {
+              return `
+                  <div class="tableRow">
+                    <p>${item.name}</p>
+                    <p>${item.quantity}</p>
+                    <p>${item.price * item.quantity}</p>
+                  </div>
+                `;
+            })
+            .join("")}
+         
+          <div class=' totalRow'>
+          <div class='tableRow '>
+          <h3>sous totale</h3>
+          <p>${sousTotal}</p>
+          </div>
+          <div class='tableRow '>
+          <h3>Tax</h3>
+          <p>${tax}%</p>
+          </div>
+  
+          <div class='tableRow '>
+          <h3>Remise</h3>
+          <p>${promo}%</p>
+          </div>
+  
+            <div class='tableRow '>
+            <h3>Total</h3>
+            <p>${total}</p>
+            </div>
+            <div class='tableRow '>
+            <h3>montant payé </h3>
+            <p>${Number(
+              Number(total - montantRest) + Number(montantPourPayer)
+            ).toFixed(2)}</p>
+            </div>
+            <div class='tableRow '>
+            <h3>montant restant</h3>
+            <p>${
+              montantRest > 0
+                ? Number(montantRest - montantPourPayer).toFixed(2)
+                : (total - montantPourPayer).toFixed(2)
+            }</p>
+            </div>
+          </div>
+        </div>
+        <div class='footer'>
+          <p class='footerText'>Merci de votre achat ! </
+      
+      div>
+        </body>
+      </html>
+    `;
+
+      const win = window.open("", "", "height=700,width=700");
+      win.document.write(html);
+      win.document.close();
+      win.print();
+      if (montantRest - montantPourPayer <= 0) {
+        window.location.href = "/caissiere";
+      } else window.location.reload();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  useEffect(() => {
+    fetchProducts();
+  }, []);
   return (
     <div>
       <div>
@@ -156,8 +356,17 @@ const PaymentForm = () => {
               </div>
               <div className="modal-body">
                 <div className="filtre col-6 ">
+                  {montantRest && montantRest > 0 && (
+                    <label>
+                      montant Restant: {Number(montantRest).toFixed(2)}
+                    </label>
+                  )}
                   <label>montant à payer:</label>
-                  <input className="form-control" type="number" />
+                  <input
+                    className="form-control"
+                    type="number"
+                    onChange={(e) => handleMontant(e)}
+                  />
                 </div>
                 <div className="filtre col-12 mt-3 pb-2">
                   <label>choisir méthode de payment</label>
@@ -189,53 +398,22 @@ const PaymentForm = () => {
                     />{" "}
                     carte bancaire
                   </div>
-                  {method == "espece" && (
+                  {montantRest > 0 ? (
                     <button
                       className="btn btn-primary"
-                      style={{ marginTop: "20px" }}
-                      onClick={printPdf}
+                      style={{ marginTop: "10px" }}
+                      onClick={updateSale}
                     >
                       confirmer
                     </button>
-                  )}
-                  {method == "chéque" && (
-                    <div className="row mt-4">
-                      <div className="filtre col-4">
-                        <label>banque</label>
-                        <input type="text" className="form-control" />
-                      </div>
-                      <div className="filtre col-4">
-                        <label>agence</label>
-                        <input type="text" className="form-control" />
-                      </div>
-                      <div className="filtre col-4">
-                        <label>code</label>
-                        <input type="text" className="form-control" />
-                      </div>
-                      <button
-                        className="btn btn-primary"
-                        style={{ marginTop: "10px" }}
-                      >
-                        confirmer
-                      </button>
-                    </div>
-                  )}
-
-                  {method == "carteBancaire" && (
-                    <div className=" mt-4">
-                      <div className="filtre col-4">
-                        <label>Num transaction</label>
-                        <input type="text" className="form-control" />
-                      </div>
-
-                      <button
-                        className="btn btn-primary"
-                        style={{ marginTop: "20px" }}
-                        onClick={printPdf}
-                      >
-                        confirmer
-                      </button>
-                    </div>
+                  ) : (
+                    <button
+                      className="btn btn-primary"
+                      style={{ marginTop: "10px" }}
+                      onClick={addSale}
+                    >
+                      confirmer
+                    </button>
                   )}
                 </div>
 

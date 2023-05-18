@@ -16,32 +16,31 @@ const LineChart = ({ data }) => {
       newFilteredData[line] = {};
       for (const date in data[line]) {
         const d = new Date(date);
-        const y = d.getFullYear();
-        const m = d.getMonth() + 1;
-        const w = Math.ceil(d.getDate() / 7);
+        const y = d.getFullYear().toString();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const w = String(Math.ceil(d.getDate() / 7)).padStart(2, "0");
 
         if (y !== Year) continue;
-        if (Month && m !== parseInt(Month)) continue;
-        if (Week && w !== parseInt(Week)) continue;
+        if (Month && m !== Month) continue;
+        if (Week && w !== Week) continue;
 
         newFilteredData[line][date] = data[line][date];
       }
     }
     setFilteredData(newFilteredData);
   }, [data, Week, Month, Year]);
-
   const chartData = {
     datasets: [
       {
         label: "Objectif",
-        data: filteredData.line1,
+        data: filteredData.line2,
         fill: false,
         borderColor: "green",
         backgroundColor: "green",
       },
       {
-        label: "panier moyen",
-        data: filteredData.line2,
+        label: "Panier Moyen",
+        data: filteredData.line1,
         fill: false,
         borderColor: "blue",
         backgroundColor: "blue",
@@ -118,7 +117,7 @@ const LineChart = ({ data }) => {
         </div>
       </div>
       <div
-        className="d-flex justify-content-center align-items-center card"
+        className="card d-flex justify-content-center align-items-center"
         style={{ padding: "30px" }}
       >
         <Line data={chartData} />

@@ -1,20 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Header from "../../components/Header";
 import SideBar from "../../components/caissier/SideBar";
 import Footer from "../../components/Footer";
 import LineChart from "../../components/caissier/LineChart";
 import axios from "axios";
+import { Context } from "../../context/Context";
 const Objectif = () => {
-  const [data, setData] = useState([]);
-  const fetchData = async () => {
-    const Objectifdata = await axios.get(
-      "/api/objectifMagasin/getObjectifMagasin"
+  const { user, dispatch } = useContext(Context);
+  const [data, setData] = useState();
+
+  const ObjectifCaissierData = async () => {
+    const data = await axios.get(
+      "/api/sale/getCaissierTotalSales/" + user.name
     );
-    setData(Objectifdata.data[0]);
-    console.log(Objectifdata.data);
+    setData(data.data);
   };
   useEffect(() => {
-    fetchData();
+    ObjectifCaissierData();
   }, []);
 
   return (

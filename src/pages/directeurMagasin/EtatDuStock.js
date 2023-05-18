@@ -5,45 +5,28 @@ import Footer from "../../components/Footer";
 import BootstrapTable from "react-bootstrap-table-next";
 import paginationFactory from "react-bootstrap-table2-paginator";
 import "react-bootstrap-table2-paginator/dist/react-bootstrap-table2-paginator.min.css";
+import axios from "axios";
 const EtatDuStock = () => {
+  const [data, setData] = useState([]);
   const columns = [
     {
-      dataField: "codeProduit",
+      dataField: "code",
       text: "code produit",
     },
     {
-      dataField: "nomProduit",
+      dataField: "name",
       text: "nom produit",
     },
     {
-      dataField: "prixProduit",
+      dataField: "price",
       text: "prix produit",
     },
     {
-      dataField: "qteEnStock",
+      dataField: "quantity",
       text: "qte en stock",
     },
   ];
-  const data = [
-    {
-      codeProduit: "1A23",
-      nomProduit: "lorem1",
-      prixProduit: 120,
-      qteEnStock: 3,
-    },
-    {
-      codeProduit: "2B23",
-      nomProduit: "lorem2",
-      prixProduit: 120,
-      qteEnStock: 3,
-    },
-    {
-      codeProduit: "1B03",
-      nomProduit: "lorem2",
-      prixProduit: 120,
-      qteEnStock: 3,
-    },
-  ];
+
   const [codeProduit, setCodeProduit] = useState("");
   const [nomProduit, setNomProduit] = useState("");
   // const [filteredData, setFilteredData] = useState(stock);
@@ -56,15 +39,41 @@ const EtatDuStock = () => {
     setNomProduit(event.target.value);
   };
 
-  // useEffect(() => {
-  //   const filteredStock = stock.filter((stk) => {
-  //     if (nomProduit === "" && codeProduit === "") {
-  //       return true;
-  //     }
-  //     return stk.codeProduit == codeProduit || stk.nomProduit == nomProduit;
-  //   });
-  //   setFilteredData(filteredStock);
-  // }, [codeProduit, nomProduit]);
+  const fetchSales = async () => {
+    try {
+      const response = await axios.get("/api/products/getProducts");
+      const productsdata = response.data;
+
+      const filteredData = productsdata
+
+        .filter((p) => {
+          if (codeProduit !== "") {
+            return p.code.toLowerCase().includes(codeProduit.toLowerCase());
+          }
+          return true;
+        })
+        .filter((p) => {
+          if (nomProduit !== "") {
+            return p.name.toLowerCase().includes(nomProduit.toLowerCase());
+          }
+          return true;
+        })
+        .map((p) => ({
+          code: p.code,
+          name: p.name,
+          price: p.price,
+          quantity: p.quantity,
+        }));
+
+      setData(filteredData);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchSales();
+  }, [data]);
   return (
     <>
       <Header />

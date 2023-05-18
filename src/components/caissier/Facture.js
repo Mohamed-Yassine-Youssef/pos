@@ -1,6 +1,6 @@
 import React from "react";
 
-const Facture = () => {
+const Facture = (total, tableData) => {
   const styles = {
     container: {
       flex: 2,
@@ -136,7 +136,7 @@ const Facture = () => {
           <p style={{ flex: 3 }} />
           <h3 style={[styles.totalText, { flex: 1 }]}>Grand Total</h3>
           <p style={{ flex: 1 }} />
-          <p style={{ flex: 1 }}>385</p>
+          <p style={{ flex: 1 }}></p>
         </div>
         <div style={styles.footer}>
           <p style={styles.footerText}>Thank you for your business!</p>

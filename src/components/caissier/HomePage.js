@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import PaymentForm from "./PaymentForm";
 import {
   Navigation,
@@ -18,8 +18,9 @@ import "swiper/css/pagination";
 import "swiper/css/scrollbar";
 import { Link } from "react-router-dom";
 import AddClient from "./AddClient";
+import { Context } from "../../context/Context";
 const HomePage = () => {
-  const options = ["passager", "client 1 ", "client 2"];
+  const { user, dispatch } = useContext(Context);
   const [searchTerm, setSearchTerm] = useState("");
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -57,11 +58,11 @@ const HomePage = () => {
     "/dist/img/soinjour.jpg",
     "/dist/img/fdtliquide.jpg",
   ];
-  const [barcode, setBarcode] = useState("");
-  const [quantity, setQuantity] = useState(1);
-  const [libelle, setLibelle] = useState("");
-  const [pu, setPu] = useState(0);
-
+  const [selectedClientName, setSelectedClientName] =
+    useState("choisir client");
+  const [selectedClientId, setSelectedClientId] = useState("");
+  const [tax, setTax] = useState(0);
+  const [promo, setPromo] = useState(0);
   const [codeProduit, setCodeProduit] = useState();
   const [tableData, setTableData] = useState([]);
   const [brands, setBrands] = useState();
@@ -71,6 +72,30 @@ const HomePage = () => {
   const [products, setProducts] = useState([]);
   const [filtredProducts, setFilteredProducts] = useState([]);
   const [packs, setPacks] = useState([]);
+  const [clientsData, setClientsData] = useState();
+  const [tiketsData, setTiketsData] = useState();
+  const [vendeur, setVendeur] = useState("");
+  const fetchTikets = async () => {
+    try {
+      const response = await axios.get(
+        "/api/sale/getSales/" + selectedClientId
+      );
+      const salesdata = response.data;
+      setTiketsData(salesdata);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleClientSelect = (id, name) => {
+    setSelectedClientName(name);
+    setSelectedClientId(id);
+  };
+
+  async function fetchClientsData() {
+    const userdata = await axios.get("/api/client/getClients");
+    setClientsData(userdata.data);
+  }
 
   const AddProductsToTable = (product) => {
     setTableData([...tableData, product]);
@@ -132,15 +157,27 @@ const HomePage = () => {
   const [sousTotal, setSousTotal] = useState(() => {
     return tableData.reduce((acc, item) => acc + item.price * item.quantity, 0);
   });
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     fetchData();
+
+    fetchClientsData();
     const newTotal = tableData.reduce(
       (acc, item) => acc + item.price * item.quantity,
       0
     );
     setSousTotal(newTotal);
   }, [tableData]);
+
+  useEffect(() => {
+    const newTotal =
+      sousTotal + (sousTotal * tax) / 100 - (sousTotal * promo) / 100;
+    setTotal(newTotal);
+  }, [sousTotal, tax, promo]);
+  useEffect(() => {
+    fetchTikets();
+  }, [selectedClientId, selectedClientName]);
 
   return (
     <div>
@@ -161,7 +198,6 @@ const HomePage = () => {
                       onClick={() => setFilteredProducts(products)}
                       style={{ cursor: "pointer" }}
                     >
-                      {" "}
                       Pack
                     </h6>
                     <Swiper
@@ -172,8 +208,6 @@ const HomePage = () => {
                       slidesPerView={2}
                       freeMode={true}
                       pagination={{ clickable: true }}
-                      // onSwiper={(swiper) => console.log(swiper)}
-                      // onSlideChange={() => console.log("slide change")}
                     >
                       {packs?.map((item, index) => {
                         return (
@@ -244,8 +278,6 @@ const HomePage = () => {
                       slidesPerView={2}
                       freeMode={true}
                       pagination={{ clickable: true }}
-                      // onSwiper={(swiper) => console.log(swiper)}
-                      // onSlideChange={() => console.log("slide change")}
                     >
                       {sousFamille?.map((item, index) => {
                         return (
@@ -282,8 +314,6 @@ const HomePage = () => {
                       slidesPerView={2}
                       freeMode={true}
                       pagination={{ clickable: true }}
-                      // onSwiper={(swiper) => console.log(swiper)}
-                      // onSlideChange={() => console.log("slide change")}
                     >
                       {families?.map((item, index) => {
                         return (
@@ -315,8 +345,6 @@ const HomePage = () => {
                         slidesPerView={1}
                         freeMode={true}
                         pagination={{ clickable: true }}
-                        // onSwiper={(swiper) => console.log(swiper)}
-                        // onSlideChange={() => console.log("slide change")}
                       >
                         <SwiperSlide>
                           <div
@@ -389,7 +417,7 @@ const HomePage = () => {
                   )}
                 </div>
               </div>
-              <div className="col-9 card">
+              <div className="col-9 card" style={{ paddingBottom: "50px" }}>
                 <div className="container mt-4">
                   <div className="d-flex align-items-center">
                     {" "}
@@ -399,7 +427,7 @@ const HomePage = () => {
                         id="dropdown-basic"
                         className="custom-toggle"
                       >
-                        choisir client
+                        {selectedClientName}
                       </Dropdown.Toggle>
                       <Dropdown.Menu className="custom-menu">
                         <FormControl
@@ -409,21 +437,32 @@ const HomePage = () => {
                           className="custom-input"
                         />
                         <Dropdown.Divider />
-                        {options
-                          .filter((option) =>
-                            option
-                              .toLowerCase()
-                              .includes(searchTerm.toLowerCase())
-                          )
-                          .map((option, index) => (
-                            <Dropdown.Item
-                              key={index}
-                              href="#"
-                              className="custom-item"
-                            >
-                              {option}
-                            </Dropdown.Item>
-                          ))}
+                        <Dropdown.Item
+                          className="custom-item"
+                          onClick={() => handleClientSelect("", "passager")}
+                        >
+                          passager
+                        </Dropdown.Item>
+
+                        {clientsData &&
+                          clientsData
+                            .filter((option) =>
+                              option.name
+                                .toLowerCase()
+                                .includes(searchTerm.toLowerCase())
+                            )
+                            .map((option, index) => (
+                              <Dropdown.Item
+                                key={index}
+                                href="#"
+                                className="custom-item"
+                                onClick={() =>
+                                  handleClientSelect(option._id, option.name)
+                                }
+                              >
+                                {option.name}
+                              </Dropdown.Item>
+                            ))}
                       </Dropdown.Menu>
                     </Dropdown>
                     <span className="mr-2"> ou </span>
@@ -467,9 +506,6 @@ const HomePage = () => {
                     slidesPerView={4}
                     freeMode={true}
                     pagination={{ clickable: true }}
-
-                    // onSwiper={(swiper) => console.log(swiper)}
-                    // onSlideChange={() => console.log("slide change")}
                   >
                     {filtredProducts?.map((item, index) => {
                       return (
@@ -556,47 +592,69 @@ const HomePage = () => {
                       </div>
                       <div className="mt-2">
                         <label className="d-block">promo</label>
-                        <input type="text" className="form-control" />
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={promo}
+                          onChange={(e) => setPromo(e.target.value)}
+                        />
                       </div>
                       <div className="mt-2">
                         <label className="d-block">tax</label>
-                        <input type="text" className="form-control" />
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={tax}
+                          onChange={(e) => setTax(e.target.value)}
+                        />
                       </div>
                       <div className="mt-2">
                         <label className="d-block">total</label>
-                        <input type="text" className="form-control" disabled />
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={total}
+                          disabled
+                        />
                       </div>
                     </div>
                     <div className="p-2" style={{ border: "1px solid black" }}>
-                      {/* <div className="mt-3">
-                        <label className="d-block">code vendeur</label>
-                        <input type="text" className="form-control" />
-                      </div> */}
-                      <div className=" mt-3 d-flex align-items-center">
-                        <button className="mr-2 btn btn-secondary">
-                          enregistrer
-                        </button>
-                        <PaymentForm />
-                        {/* <button className="mr-2 btn btn-dark">payer</button> */}
+                      <div className="mt-3">
+                        <label className="d-block">nom vendeur</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          style={{ marginBottom: "10px" }}
+                          onChange={(e) => setVendeur(e.target.value)}
+                        />
                       </div>
+                      <PaymentForm
+                        total={total}
+                        tableData={tableData}
+                        sousTotal={sousTotal}
+                        tax={tax}
+                        promo={promo}
+                        selectedClientName={selectedClientName}
+                        selectedClientId={selectedClientId}
+                        vendeur={vendeur}
+                        caissier={user.name}
+                      />
                     </div>
                   </div>
                 </div>
                 <div className="giftpromo container mt-5">
                   <div>
                     <h5 className="text-center font-weight-bold pb-3">
-                      Gifts et promos
+                      promos et cadeaux
                     </h5>
                     <Swiper
-                      className="swiper-container2 giftes"
+                      className="swiper-container2 giftes "
                       // install Swiper modules
                       modules={[Navigation, Pagination, Scrollbar, A11y]}
                       spaceBetween={50}
-                      slidesPerView={4}
+                      slidesPerView={3}
                       freeMode={true}
                       pagination={{ clickable: true }}
-                      // onSwiper={(swiper) => console.log(swiper)}
-                      // onSlideChange={() => console.log("slide change")}
                     >
                       <SwiperSlide>
                         {" "}
@@ -604,62 +662,29 @@ const HomePage = () => {
                           <img
                             src={
                               process.env.PUBLIC_URL +
-                              "/dist/img/gift/téléchargement.jpg"
+                              "/dist/img/gift/bonachat.jpg"
                             }
                             style={{ width: "100%" }}
                           />{" "}
                         </div>
                       </SwiperSlide>
                       <SwiperSlide>
+                        {" "}
                         <div>
                           <img
                             src={
-                              process.env.PUBLIC_URL +
-                              "/dist/img/gift/téléchargement.jpg"
+                              process.env.PUBLIC_URL + "/dist/img/gift/g2.jpg"
                             }
                             style={{ width: "100%" }}
                           />{" "}
                         </div>
                       </SwiperSlide>
                       <SwiperSlide>
+                        {" "}
                         <div>
                           <img
                             src={
-                              process.env.PUBLIC_URL +
-                              "/dist/img/gift/téléchargement.jpg"
-                            }
-                            style={{ width: "100%" }}
-                          />{" "}
-                        </div>
-                      </SwiperSlide>
-                      <SwiperSlide>
-                        <div>
-                          <img
-                            src={
-                              process.env.PUBLIC_URL +
-                              "/dist/img/gift/téléchargement.jpg"
-                            }
-                            style={{ width: "100%" }}
-                          />{" "}
-                        </div>
-                      </SwiperSlide>
-                      <SwiperSlide>
-                        <div>
-                          <img
-                            src={
-                              process.env.PUBLIC_URL +
-                              "/dist/img/gift/téléchargement.jpg"
-                            }
-                            style={{ width: "100%" }}
-                          />{" "}
-                        </div>
-                      </SwiperSlide>
-                      <SwiperSlide>
-                        <div>
-                          <img
-                            src={
-                              process.env.PUBLIC_URL +
-                              "/dist/img/gift/téléchargement.jpg"
+                              process.env.PUBLIC_URL + "/dist/img/gift/g3.jpg"
                             }
                             style={{ width: "100%" }}
                           />{" "}
@@ -669,109 +694,40 @@ const HomePage = () => {
                   </div>
                 </div>
 
-                <div className="ticketnoncloture container mt-5 pb-5">
-                  <div>
-                    <h5 className="text-center font-weight-bold pb-3">
-                      ticket non cloturées
-                    </h5>
-                    <Swiper
-                      className="swiper-container2"
-                      // install Swiper modules
-                      modules={[Navigation, Pagination, Scrollbar, A11y]}
-                      spaceBetween={50}
-                      slidesPerView={4}
-                      freeMode={true}
-                      pagination={{ clickable: true }}
-                      // onSwiper={(swiper) => console.log(swiper)}
-                      // onSlideChange={() => console.log("slide change")}
-                    >
-                      <SwiperSlide>
-                        <Link to="/caissiere/ticket/add">
-                          <div className="ticket">
-                            <div className="ticket__content">
-                              <Link to="/caissiere/ticket/add">
-                                {" "}
-                                <p className="ticket__text">
-                                  Référence Ticket:xxxxx
-                                </p>
-                              </Link>
+                {tiketsData && selectedClientId != "" && (
+                  <div className="ticketnoncloture container mt-5 pb-5">
+                    <div>
+                      <h5 className="text-center font-weight-bold pb-3">
+                        ticket non cloturées
+                      </h5>
+                      <Swiper
+                        className="swiper-container2"
+                        // install Swiper modules
+                        modules={[Navigation, Pagination, Scrollbar, A11y]}
+                        spaceBetween={50}
+                        slidesPerView={4}
+                        freeMode={true}
+                        pagination={{ clickable: true }}
+                      >
+                        <SwiperSlide>
+                          <Link to={`/caissiere/ticket/${tiketsData._id}`}>
+                            <div className="ticket">
+                              <div className="ticket__content">
+                                <Link
+                                  to={`/caissiere/ticket/${tiketsData._id}`}
+                                >
+                                  <p className="ticket__text">
+                                    Référence Ticket:{tiketsData.reference}
+                                  </p>
+                                </Link>
+                              </div>
                             </div>
-                          </div>
-                        </Link>
-                      </SwiperSlide>
-                      <SwiperSlide>
-                        <Link to="/caissiere/ticket/add">
-                          <div className="ticket">
-                            <div className="ticket__content">
-                              <Link to="/caissiere/ticket/add">
-                                {" "}
-                                <p className="ticket__text">
-                                  Référence Ticket:xxxxx
-                                </p>
-                              </Link>
-                            </div>
-                          </div>
-                        </Link>
-                      </SwiperSlide>
-                      <SwiperSlide>
-                        <Link to="/caissiere/ticket/add">
-                          <div className="ticket">
-                            <div className="ticket__content">
-                              <Link to="/caissiere/ticket/add">
-                                {" "}
-                                <p className="ticket__text">
-                                  Référence Ticket:xxxxx
-                                </p>
-                              </Link>
-                            </div>
-                          </div>
-                        </Link>
-                      </SwiperSlide>
-                      <SwiperSlide>
-                        <Link to="/caissiere/ticket/add">
-                          <div className="ticket">
-                            <div className="ticket__content">
-                              <Link to="/caissiere/ticket/add">
-                                {" "}
-                                <p className="ticket__text">
-                                  Référence Ticket:xxxxx
-                                </p>
-                              </Link>
-                            </div>
-                          </div>
-                        </Link>
-                      </SwiperSlide>
-                      <SwiperSlide>
-                        <Link to="/caissiere/ticket/add">
-                          <div className="ticket">
-                            <div className="ticket__content">
-                              <Link to="/caissiere/ticket/add">
-                                {" "}
-                                <p className="ticket__text">
-                                  Référence Ticket:xxxxx
-                                </p>
-                              </Link>
-                            </div>
-                          </div>
-                        </Link>
-                      </SwiperSlide>
-                      <SwiperSlide>
-                        <Link to="/caissiere/ticket/add">
-                          <div className="ticket">
-                            <div className="ticket__content">
-                              <Link to="/caissiere/ticket/add">
-                                {" "}
-                                <p className="ticket__text">
-                                  Référence Ticket:xxxxx
-                                </p>
-                              </Link>
-                            </div>
-                          </div>
-                        </Link>
-                      </SwiperSlide>
-                    </Swiper>
+                          </Link>
+                        </SwiperSlide>
+                      </Swiper>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

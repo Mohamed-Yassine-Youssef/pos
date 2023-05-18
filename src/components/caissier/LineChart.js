@@ -33,14 +33,14 @@ const LineChart = ({ data }) => {
     datasets: [
       {
         label: "Objectif",
-        data: filteredData.line1,
+        data: filteredData.line2,
         fill: false,
         borderColor: "green",
         backgroundColor: "green",
       },
       {
         label: "Chiffre d'affaire Actuelle",
-        data: filteredData.line2,
+        data: filteredData.line1,
         fill: false,
         borderColor: "blue",
         backgroundColor: "blue",

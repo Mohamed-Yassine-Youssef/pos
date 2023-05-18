@@ -1,72 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import SideBar from "../../components/directeurMagasin/SideBar";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import LineChart from "../../components/directeurMagasin/LineChart";
+import axios from "axios";
 
 const Home = () => {
-  const Data = [
-    {
-      id: 1,
-      month: "janvier",
-      objectif: 80000,
-    },
-    {
-      id: 2,
-      month: "fevrier",
-      objectif: 45677,
-    },
-    {
-      id: 3,
-      month: "Mars",
-      objectif: 78888,
-    },
-    {
-      id: 3,
-      month: "Avril",
-      objectif: 78888,
-    },
-    {
-      id: 3,
-      month: "Mai",
-      objectif: 78888,
-    },
-    {
-      id: 3,
-      month: "juin",
-      objectif: 78888,
-    },
-    {
-      id: 3,
-      month: "juiller",
-      objectif: 78888,
-    },
-    {
-      id: 3,
-      month: "Aout",
-      objectif: 78888,
-    },
-    {
-      id: 3,
-      month: "september",
-      objectif: 78888,
-    },
-    {
-      id: 3,
-      month: "october",
-      objectif: 78888,
-    },
-    {
-      id: 3,
-      month: "november",
-      objectif: 78888,
-    },
-    {
-      id: 3,
-      month: "decembre",
-      objectif: 78888,
-    },
-  ];
+  const [data, setData] = useState();
+
+  const panierMoyenData = async () => {
+    const data = await axios.get("/api/sale/getAverageSales");
+
+    setData(data.data);
+  };
+
+  const [magasinStatics, setMagasinStatics] = useState();
+  const getStatics = async () => {
+    const data = await axios.get("/api/sale/getMagasinSales");
+    setMagasinStatics(data.data);
+  };
+  useEffect(() => {
+    getStatics();
+    panierMoyenData();
+  }, []);
 
   return (
     <div>
@@ -101,7 +57,8 @@ const Home = () => {
                   <div className="small-box bg-success">
                     <div className="inner">
                       <h3>
-                        53<sup style={{ fontSize: 20 }}></sup>
+                        {magasinStatics?.productCount}
+                        <sup style={{ fontSize: 20 }}></sup>
                       </h3>
                       <p>produits totales</p>
                     </div>
@@ -130,7 +87,7 @@ const Home = () => {
                   {/* small box */}
                   <div className="small-box bg-danger">
                     <div className="inner">
-                      <h3>65000$</h3>
+                      <h3>{magasinStatics?.totalSales} dt</h3>
                       <p>ventes totales</p>
                     </div>
                     <div className="icon">
@@ -156,7 +113,7 @@ const Home = () => {
                   {/* small box */}
                   <div className="small-box bg-info">
                     <div className="inner">
-                      <h3>1000$</h3>
+                      <h3>{magasinStatics?.dailyRevenue} dt</h3>
                       <p>chiffre d'affaire journalier</p>
                     </div>
                     <div className="icon">
@@ -183,7 +140,7 @@ const Home = () => {
               {/* Main row */}
               <div className="d-flex justify-content-center">
                 <div style={{ width: 700 }} className=" px-3 py-4">
-                  <LineChart />{" "}
+                  <LineChart data={data} />{" "}
                 </div>
               </div>
 

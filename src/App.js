@@ -4,7 +4,6 @@ import GestionClient from "./pages/caissier/GestionClient";
 import ImprimerRecu from "./pages/caissier/Ventes";
 import Objectif from "./pages/caissier/Objectif";
 import Pos from "./pages/caissier/Pos";
-import RapportInventaire from "./pages/caissier/HistoriqueVentes";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/directeurMagasin/Home";
 import ObjectifMagasin from "./pages/directeurMagasin/ObjectifMagasin";
@@ -21,7 +20,7 @@ import CalendrierVendeur from "./pages/vendeur/CalendrierVendeur";
 import EtatMagasin from "./pages/responsableDeVente/EtatMagasin";
 import PanierMoyen from "./pages/responsableDeVente/PanierMoyen";
 import StockAutreMagasinPourCaissier from "./pages/caissier/StockAutreMagasinPourCaissier";
-import HistoriqueVentes from "./pages/caissier/HistoriqueVentes";
+import HistoriqueVentes from "./pages/directeurMagasin/HistoriqueVentes";
 import AjouterProduitsATicket from "./pages/caissier/AjouterProduitsATicket";
 import { useState } from "react";
 
@@ -38,7 +37,7 @@ function App() {
             <Route path="gestion_client" element={<GestionClient />} />
             <Route path="objectif" element={<Objectif />} />
             <Route path="ventes" element={<Ventes />} />
-            <Route path="ticket/add" element={<AjouterProduitsATicket />} />
+            <Route path="ticket/:id" element={<AjouterProduitsATicket />} />
             <Route
               path="/caissiere/historique_ventes"
               element={<HistoriqueVentes />}
@@ -65,12 +64,13 @@ function App() {
               path="CalendrierEmployees"
               element={<CalendrierEmployées />}
             />
+            <Route path="historique_ventes" element={<HistoriqueVentes />} />
           </Route>
 
           <Route path="/vendeur" element={<ObjectifDuVendeur />} />
           <Route path="/vendeur/objectif" element={<ObjectifDuVendeur />} />
           <Route path="/vendeur/calendrier" element={<CalendrierVendeur />} />
-          <Route path="/responsableDesVentes" element={<EtatMagasin />} />
+          {/* <Route path="/responsableDesVentes" element={<EtatMagasin />} />
           <Route
             path="/responsableDesVentes/etatMagasin"
             element={<EtatMagasin />}
@@ -78,7 +78,7 @@ function App() {
           <Route
             path="/responsableDesVentes/panierMoyen"
             element={<PanierMoyen />}
-          />
+          /> */}
         </Routes>
       </BrowserRouter>
     </div>

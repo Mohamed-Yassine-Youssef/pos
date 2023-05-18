@@ -59,8 +59,16 @@
 .swiper-container2.produits .swiper-slide {
   box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
 }
+.swiper-wrapper {
+  display: "flex";
+  align-items: "center !important";
+}
 .giftes .swiper-slide {
   border: none !important;
+}
+#swiper-wrapper-8ec7fb5680a433ab {
+  display: flex;
+  align-items: center;
 }
 .client_type button {
   background-color: white;

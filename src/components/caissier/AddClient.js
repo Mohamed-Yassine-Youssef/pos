@@ -1,6 +1,7 @@
 import axios from "axios";
 import React, { useContext, useState } from "react";
 import { Context } from "../../context/Context";
+import { useLocation } from "react-router-dom";
 const AddClient = () => {
   const { user } = useContext(Context);
   const [address, setAddress] = useState();
@@ -10,7 +11,7 @@ const AddClient = () => {
   const [firstName, setFirstName] = useState();
   const [lastName, setLastName] = useState();
   const [phoneNumber, setPhoneNumber] = useState();
-
+  const endpoint = useLocation();
   const ajouterClient = async () => {
     try {
       const config = {
@@ -30,7 +31,11 @@ const AddClient = () => {
         },
         config
       );
-      window.location.replace("/caissiere/gestion_client");
+      if (endpoint.pathname == "/caissiere/gestion_client") {
+        window.location.replace("/caissiere/gestion_client");
+      } else {
+        window.location.replace("/caissiere");
+      }
     } catch (err) {
       console.log(err);
     }
